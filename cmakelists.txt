@@ -1,0 +1,12 @@
+cmake_minimum_required (VERSION 3.8)
+
+set(Mette_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
+
+message("Project Root dir: " ${Mette_ROOT})
+
+project(Mette)
+
+add_subdirectory(tbb)
+add_subdirectory(poco)
+add_subdirectory(fix8)
+add_subdirectory(src)

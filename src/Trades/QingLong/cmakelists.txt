@@ -1,0 +1,21 @@
+cmake_minimum_required (VERSION 3.8)
+
+file(GLOB SRC
+    "main.cpp"
+)
+
+add_executable(Mette ${SRC})
+
+target_link_libraries(Mette tbb)
+target_link_libraries(Mette FIX8)
+target_link_libraries(Mette Net)
+target_link_libraries(Mette JSON)
+target_link_libraries(Mette Foundation)
+
+target_link_libraries(Mette ExGdax)
+target_link_libraries(Mette ExBitstamp)
+
+message("Done Processing Dir [" ${CMAKE_CURRENT_SOURCE_DIR} "]")
+
+add_subdirectory(Endpoints)
+add_subdirectory(Trades)

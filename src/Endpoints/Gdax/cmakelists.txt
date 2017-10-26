@@ -1,0 +1,18 @@
+cmake_minimum_required (VERSION 3.8)
+
+
+include_directories(${Mette_ROOT}/poco/Net/include/)
+include_directories(${Mette_ROOT}/poco/JSON/include/)
+
+file(GLOB Gdax_SRC
+    "*.h"
+    "*.cpp"
+)
+
+add_library(ExGdax ${Gdax_SRC})
+
+target_link_libraries(ExGdax Net)
+target_link_libraries(ExGdax JSON)
+
+
+message("Done Processing Dir [" ${CMAKE_CURRENT_SOURCE_DIR} "]")

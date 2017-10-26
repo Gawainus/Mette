@@ -1,0 +1,20 @@
+cmake_minimum_required (VERSION 3.8)
+
+
+include_directories(${Mette_ROOT}/poco/Net/include/)
+include_directories(${Mette_ROOT}/poco/JSON/include/)
+include_directories(${Mette_ROOT}/fix8/include/)
+
+file(GLOB ExBitstamp_SRC
+    "*.h"
+    "*.cpp"
+)
+
+add_library(ExBitstamp ${ExBitstamp_SRC})
+
+target_link_libraries(ExBitstamp Net)
+target_link_libraries(ExBitstamp JSON)
+target_link_libraries(ExBitstamp FIX8)
+
+
+message("Done Processing Dir [" ${CMAKE_CURRENT_SOURCE_DIR} "]")
