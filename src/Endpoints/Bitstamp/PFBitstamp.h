@@ -5,7 +5,7 @@
 
 #include "CommonDef.h"
 
-#include "MarketData/MTBook.h"
+#include "MarketData/MTSnapshotBook.h"
 
 #include <Poco/Net/WebSocket.h>
 #include <Poco/Net/HTTPClientSession.h>
@@ -30,7 +30,10 @@ namespace Mette {
 			myClientSession(host,80),
 			myRequest(Poco::Net::HTTPRequest::HTTP_GET, uri, "HTTP/1.1"),
 			myWebSocket(myClientSession, myRequest, myResponse),
-			myLogger(Poco::Logger::get("PFLoggerBitstamp"))
+			myLogger(Poco::Logger::get("PFLoggerBitstamp")),
+			myEMADiff(0),
+			myIsAboveEMA(true),
+			myPnL(0)
 			{}
 
 		bool drive();
@@ -49,6 +52,15 @@ namespace Mette {
 
 		Poco::JSON::Parser myJSONParser;
 		Poco::Logger & myLogger;
+
+
+		MTSnapshotBook mySnapshotBook;
+
+		MTPx	myEMADiff;
+		bool	myIsAboveEMA;
+
+		MTPx	myPnL;
+
 
 	};
 	}

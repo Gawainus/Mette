@@ -2,18 +2,22 @@
 #include "Endpoints/Gdax/PFGdax.h"
 #include "Endpoints/Bitstamp/PFBitstamp.h"
 
-#include "Poco/AsyncChannel.h"
-#include "Poco/SimpleFileChannel.h"
-#include "Poco/PatternFormatter.h"
-#include "Poco/FormattingChannel.h"
+#include <Poco/Timestamp.h>
+#include <Poco/AsyncChannel.h>
+#include <Poco/SimpleFileChannel.h>
+#include <Poco/PatternFormatter.h>
+#include <Poco/FormattingChannel.h>
 
 int main() {
 
+	Poco::DateTime now;
+	std::string dateStr(Poco::DateTimeFormatter::format(now, "%Y%m%d"));
 	Poco::AutoPtr<Poco::SimpleFileChannel> pChannel(new Poco::SimpleFileChannel);
-	pChannel->setProperty("path", "./mette.log");
+	pChannel->setProperty("path", "./mette_" + dateStr +".log");
 
 	Poco::AutoPtr<Poco::PatternFormatter> pPF(new Poco::PatternFormatter);
-	pPF->setProperty("pattern", "%Y-%m-%d %H:%M:%S %s: %t");
+	pPF->setProperty("times", "local");
+	pPF->setProperty("pattern", "%Y-%m-%d %H:%M:%S,%F %s: %t");
 	Poco::AutoPtr<Poco::FormattingChannel> pFC(new Poco::FormattingChannel(pPF, pChannel));
 
 	Poco::AutoPtr<Poco::AsyncChannel> pAsync(new Poco::AsyncChannel(pFC));

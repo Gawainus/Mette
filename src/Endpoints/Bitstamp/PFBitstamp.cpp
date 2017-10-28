@@ -1,4 +1,6 @@
 #include "PFBitstamp.h"
+#include "MarketData/MTTrade.h"
+
 #include <Poco/Net/NetException.h>
 
 namespace
@@ -54,16 +56,18 @@ namespace Mette
 		numBytesRecv = myWebSocket.receiveBytes(m_buff, BUFF_SIZE);
 		recvStr = std::string(m_buff, numBytesRecv);
 		myLogger.information(recvStr);
+		*/
 
 		myWebSocket.sendBytes(TradeRequest, std::strlen(TradeRequest));
 		myLogger.information(TradeRequest);
-		*/
-		
+		numBytesRecv = myWebSocket.receiveBytes(m_buff, BUFF_SIZE);
+		recvStr = std::string(m_buff, numBytesRecv);
+		myLogger.information(recvStr);
 
 		while (true)
 		{
 			myWebSocket.sendBytes(PongReply, std::strlen(PongReply));
-			myLogger.information("sent pong");
+
 			try
 			{
 				numBytesRecv = myWebSocket.receiveBytes(m_buff, BUFF_SIZE);
@@ -73,22 +77,69 @@ namespace Mette
 				const auto rv = myJSONParser.parse(recvStr);
 				myJSONParser.reset();
 
-
-
 				const auto obj = rv.extract<Poco::JSON::Object::Ptr>();
 				const auto event = obj->get("event");
 				const auto eventName = event.convert<MTStr>();
 				myLogger.critical("Event [" + eventName + "]");
-				if (eventName.compare("pusher:ping") == 0)
-				{
-					myWebSocket.sendBytes(PongReply, std::strlen(PongReply));
-					myLogger.information("Pong event handled");
-					continue;
-				}
+
 				if (eventName.compare("pusher:error") == 0)
 				{
 					myWebSocket.sendBytes(PongReply, std::strlen(PongReply));
 					myLogger.information("Error event handled");
+					continue;
+				}
+
+				if (eventName.compare("trade") == 0)
+				{
+					const auto channel = obj->get("channel");
+					if (!channel.isEmpty())
+					{
+						MTStr channelName = channel.convert<MTStr>();
+						if (channelName.compare("live_trades") == 0)
+						{
+							const auto & dataStr = obj->get("data");
+							const auto objData = myJSONParser.parse(dataStr);
+							myJSONParser.reset();
+							const auto data = objData.extract<Poco::JSON::Object::Ptr>();
+							assert(data->size());
+
+							const auto qty = data->getValue<double>("amount");
+							const auto px = data->getValue<double>("price");
+							MTTrade trade(qty, px, data->getValue<int64_t>("timestamp")*1000000);
+							
+							myEMADiff = px - mySnapshotBook._ema10;
+
+							myLogger.information("EMA Diff [" + std::to_string(myEMADiff) + "]");
+
+							bool issAboveEMAPrev = myIsAboveEMA;
+							myEMADiff < 0 ? myIsAboveEMA = false : myIsAboveEMA = true;
+							
+							if (myIsAboveEMA != issAboveEMAPrev)
+							{
+								myLogger.information("Trade crossed EMA");
+								if (myIsAboveEMA)
+								{
+									MTPx strikePx{ mySnapshotBook._bids[0].first };
+
+									myPnL += strikePx;
+									MTSstrm ss;
+									ss << "Sold @ [" << strikePx << "]";
+									myLogger.information(ss.str());
+								}
+								else
+								{
+									MTPx strikePx{ mySnapshotBook._asks[0].first };
+									myPnL -= strikePx;
+									MTSstrm ss;
+									ss << "Bout @ [" << strikePx << "]";
+									myLogger.information(ss.str());
+								}
+							}
+							myLogger.information("PnL [" + std::to_string(myPnL) + "]");
+							myLogger.information(trade.toString());
+						}
+					}
+
 					continue;
 				}
 
@@ -99,7 +150,7 @@ namespace Mette
 					continue;
 				}
 				const auto channel = obj->get("channel");
-				if (channel)
+				if (!channel.isEmpty())
 				{
 					MTStr channelName = channel.convert<MTStr>();
 					if (channelName.compare("order_book") == 0)
@@ -112,7 +163,6 @@ namespace Mette
 						assert(data->size());
 
 						// build the book
-						MTBook aBook;
 
 						const auto objAsks = data->get("asks");
 						const auto asks = objAsks.extract<Poco::JSON::Array::Ptr>();
@@ -124,7 +174,7 @@ namespace Mette
 							const auto ask = asks->getArray(i);
 							const auto px = ask->get(0).convert<double>();
 							const auto qty = ask->get(1).convert<double>();
-							aBook._asks[i] = std::make_pair(px, qty);
+							mySnapshotBook._asks[i] = std::make_pair(px, qty);
 						}
 
 						const auto objBids = data->get("bids");
@@ -137,13 +187,12 @@ namespace Mette
 							const auto bid = bids->getArray(i);
 							const auto px = bid->get(0).convert<double>();
 							const auto qty = bid->get(1).convert<double>();
-							aBook._bids[i] = std::make_pair(px, qty);
+							mySnapshotBook._bids[i] = std::make_pair(px, qty);
 						}
 
 
-
-						myLogger.debug(aBook.getLogStr());
-
+						myLogger.information("EMA10 [" + std::to_string(mySnapshotBook.calcEMA10()) + "]");
+						myLogger.debug(mySnapshotBook.toString());
 					}
 					else
 					{

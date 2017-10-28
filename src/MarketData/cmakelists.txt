@@ -5,6 +5,8 @@ file(GLOB MktData_SRC
     "*.cpp"
 )
 
+include_directories(${Mette_ROOT}/poco/Foundation/include/)
+
 add_library(MktData ${MktData_SRC})
 
 include_directories(${Mette_ROOT}/src/)

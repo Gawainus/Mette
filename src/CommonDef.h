@@ -8,8 +8,12 @@
 
 namespace Mette {
 
+
     using MTStr = std::string;
-	using MTSstrm = std::stringstream;
+    using MTSstrm = std::stringstream;
+    
+    using MTPx = double;
+    using MTQty = double;
 
 	static const size_t MAX_BOOK_LEVEL = 100;
 	static const size_t LOG_LEVEL = 10;

@@ -12,15 +12,40 @@
 
 namespace Mette
 {
+	namespace
+	{
+		double Peoriod10 = 10;
+		double Multiplier_EMA10 = 2 / (Peoriod10 + 1);
+	}
 	
-	struct MTBook
+	struct MTSnapshotBook
 	{
 		
+		MTSnapshotBook(): _ema10(0) {}
 		
 		using MtSide = std::array<std::pair<double, double>, MAX_BOOK_LEVEL>;
 
+		double calcMktMiddle() const
+		{
+			assert(_asks.size() && _bids.size());
 
-		std::string getLogStr() const
+			const auto topAsk = _asks[0];
+			const auto topBid = _bids[0];
+
+			double numerator = topAsk.first * topBid.second + topBid.first * topAsk.second;
+			double denominator = topAsk.second + topBid.second;
+			return numerator / denominator;
+		}
+
+		double calcEMA10()
+		{
+			if (_ema10 == 0) _ema10 = calcMktMiddle();
+			double mktMid = calcMktMiddle();
+			_ema10 = (mktMid - _ema10)* Multiplier_EMA10 + _ema10;
+			return _ema10;
+		}
+
+		std::string toString() const
 		{
 
 			std::stringstream ss;
@@ -55,6 +80,7 @@ namespace Mette
 		MtSide _asks;
 		MtSide _bids;
 
+		double _ema10;
 	};
 
 }
