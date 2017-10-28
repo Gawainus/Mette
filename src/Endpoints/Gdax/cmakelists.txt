@@ -10,6 +10,7 @@ file(GLOB Gdax_SRC
 )
 
 add_library(ExGdax ${Gdax_SRC})
+include_directories(${Mette_ROOT}/src/)
 
 target_link_libraries(ExGdax Net)
 target_link_libraries(ExGdax JSON)
