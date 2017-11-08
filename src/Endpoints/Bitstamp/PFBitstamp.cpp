@@ -134,8 +134,9 @@ namespace Mette
 									ss << "Bout @ [" << strikePx << "]";
 									myLogger.information(ss.str());
 								}
+
+								myLogger.information("PnL [" + std::to_string(myPnL) + "]");
 							}
-							myLogger.information("PnL [" + std::to_string(myPnL) + "]");
 							myLogger.information(trade.toString());
 						}
 					}
